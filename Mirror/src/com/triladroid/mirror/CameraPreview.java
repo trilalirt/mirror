@@ -8,10 +8,13 @@ import android.hardware.Camera;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.widget.ZoomControls;
 
 public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback {
     private SurfaceHolder mHolder;
     private Camera mCamera;
+   
 
     public CameraPreview(Context context, Camera camera) {
         super(context);
@@ -45,7 +48,11 @@ public class CameraPreview extends SurfaceView implements SurfaceHolder.Callback
         // If your preview can change or rotate, take care of those events here.
         // Make sure to stop the preview before resizing or reformatting it.
 
-        if (mHolder.getSurface() == null){
+    	
+    	
+    	
+    	
+    	if (mHolder.getSurface() == null){
           // preview surface does not exist
           return;
         }

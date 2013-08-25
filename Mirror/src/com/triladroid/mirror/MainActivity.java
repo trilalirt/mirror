@@ -2,6 +2,10 @@ package com.triladroid.mirror;
 
 
 
+import com.google.ads.AdRequest;
+import com.google.ads.AdView;
+
+
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.provider.Settings;
@@ -14,10 +18,14 @@ import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.View.OnClickListener;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
+import android.widget.ZoomControls;
 
 public class MainActivity extends Activity {
 	
@@ -25,6 +33,8 @@ public class MainActivity extends Activity {
 	PowerManager pm;
 	PowerManager.WakeLock wl;
 	private Camera mCamera;
+	private int currentZoomLevel = 0, maxZoomLevel = 0;
+	private boolean stopped = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -38,9 +48,30 @@ public class MainActivity extends Activity {
 		layout.screenBrightness = 1F;
 		getWindow().setAttributes(layout);
         
-		
 		frontcamerapresent = checkCameraHardware(getApplicationContext());
 		
+		Button StopButton = (Button) findViewById(R.id.button1);
+		StopButton.setOnClickListener(new OnClickListener()
+		{
+
+			@Override
+			public void onClick(View v) {
+				if (!stopped)
+				{
+					stopped = true;
+					mCamera.stopPreview();
+				}
+				else
+				{
+					stopped = false;
+					mCamera.startPreview();
+				}
+			}
+		}
+				);
+		
+		AdView ad = (AdView) findViewById(R.id.adView);
+        ad.loadAd(new AdRequest());
 		
 	}
 	
@@ -93,8 +124,49 @@ public class MainActivity extends Activity {
         FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
         preview.removeAllViews();
         preview.addView(mPreview);
-         
-	}
+        
+        
+        
+//        ZoomControls zoomControls = (ZoomControls) findViewById(R.id.CAMERA_ZOOM_CONTROLS);
+//
+//    	Camera.Parameters params = mCamera.getParameters();
+//    	
+//        if(params.isZoomSupported()){    
+//        maxZoomLevel = params.getMaxZoom();
+//
+//        zoomControls.setIsZoomInEnabled(true);
+//            zoomControls.setIsZoomOutEnabled(true);
+//
+//            zoomControls.setOnZoomInClickListener(new OnClickListener(){
+//            	@Override
+//            	public void onClick(View v){
+//            		Log.i("Mirror", "zoom level" + currentZoomLevel );
+//                        if(currentZoomLevel < 100){
+//                            currentZoomLevel++;
+//                            //mCamera.stopPreview();
+//                            mCamera.startSmoothZoom(currentZoomLevel);
+//                            //mCamera.startPreview();
+//                        }
+//                }
+//
+//				
+//            });
+//
+//        zoomControls.setOnZoomOutClickListener(new OnClickListener(){
+//                public void onClick(View v){
+//                        if(currentZoomLevel > 0){
+//                            currentZoomLevel--;
+//                            mCamera.startSmoothZoom(currentZoomLevel);
+//                        }
+//                }
+//            });    
+//       }
+//       else
+//         zoomControls.setVisibility(View.GONE);
+//        
+//        
+//         
+}
 	
 	@Override
     protected void onPause() {
