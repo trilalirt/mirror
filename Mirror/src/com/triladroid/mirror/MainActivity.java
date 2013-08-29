@@ -7,6 +7,7 @@ import com.google.ads.AdView;
 
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.annotation.SuppressLint;
@@ -14,9 +15,12 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Point;
 import android.hardware.Camera;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.View;
 import android.view.Window;
@@ -35,6 +39,7 @@ public class MainActivity extends Activity {
 	private Camera mCamera;
 	private int currentZoomLevel = 0, maxZoomLevel = 0;
 	private boolean stopped = false;
+	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +54,23 @@ public class MainActivity extends Activity {
 		getWindow().setAttributes(layout);
         
 		frontcamerapresent = checkCameraHardware(getApplicationContext());
+		if (!frontcamerapresent)
+		{
+			new AlertDialog.Builder(this)
+		    .setTitle("No front camera")
+		    .setMessage("No front camera found on this device. Application will be closed :(")
+		    .setPositiveButton("Okay ", new DialogInterface.OnClickListener() {
+		        public void onClick(DialogInterface dialog, int which) { 
+		        	finish();
+		        }
+		     })
+		    
+		     .show();
+			
+		}
 		
-		Button StopButton = (Button) findViewById(R.id.button1);
+		final Button StopButton = (Button) findViewById(R.id.button1);
+		StopButton.setBackgroundResource(R.drawable.pause2);
 		StopButton.setOnClickListener(new OnClickListener()
 		{
 
@@ -59,11 +79,13 @@ public class MainActivity extends Activity {
 				if (!stopped)
 				{
 					stopped = true;
+					StopButton.setBackgroundResource(R.drawable.go);
 					mCamera.stopPreview();
 				}
 				else
 				{
 					stopped = false;
+					StopButton.setBackgroundResource(R.drawable.pause2);
 					mCamera.startPreview();
 				}
 			}
@@ -72,6 +94,8 @@ public class MainActivity extends Activity {
 		
 		AdView ad = (AdView) findViewById(R.id.adView);
         ad.loadAd(new AdRequest());
+        
+   
 		
 	}
 	
@@ -81,9 +105,9 @@ public class MainActivity extends Activity {
 		if (frontcamerapresent)
 		{
 			
-			pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-			wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
-			wl.acquire();
+//			pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+//			wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
+//			wl.acquire();
 		
 		
 		}
@@ -91,7 +115,7 @@ public class MainActivity extends Activity {
 		{
 			new AlertDialog.Builder(this)
 		    .setTitle("No front camera")
-		    .setMessage("No front camera fuond on this device. Application will be closed :(")
+		    .setMessage("No front camera found on this device. Application will be closed :(")
 		    .setPositiveButton("Okay ", new DialogInterface.OnClickListener() {
 		        public void onClick(DialogInterface dialog, int which) { 
 		        	finish();
@@ -116,14 +140,30 @@ public class MainActivity extends Activity {
         //FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(pictureSize.width, pictureSize.height, 80);
         //preview.setLayoutParams(params);
         
-        RelativeLayout rl = (RelativeLayout) findViewById(R.id.layoutid);
-        rl.getLayoutParams().height = pictureSize.width;
-        rl.getLayoutParams().width = pictureSize.height;
+        FrameLayout rl = (FrameLayout) findViewById(R.id.camera_preview);
+        
+        Display display = getWindowManager().getDefaultDisplay();
+        
+        int width =  display.getWidth();
+        int height = display.getHeight();
+//        Log.i("test", "This is width " + width + " This is height " + height  );
+//        
+//        
+       
+        double piccoef = 1.0*pictureSize.width/pictureSize.height;
+        height = (int) (width*piccoef);
+        Log.i("test", "2 This is width " + width + " This is height " + height  );
+        
+        rl.getLayoutParams().height = height;
+        rl.getLayoutParams().width = width;
+        
+        //rl.getLayoutParams().height = pictureSize.width;
+        //rl.getLayoutParams().width = pictureSize.height;
         
         CameraPreview mPreview = new CameraPreview(this, mCamera);
-        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
-        preview.removeAllViews();
-        preview.addView(mPreview);
+        //FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
+        rl.removeAllViews();
+        rl.addView(mPreview);
         
         
         
@@ -206,7 +246,7 @@ public class MainActivity extends Activity {
 //		getMenuInflater().inflate(R.menu.main, menu);
 //		return true;
 //	}
-	
+//	
 	
 	public static Camera getfrontCameraInstance(){
 	        Camera c = null;
