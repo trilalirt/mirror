@@ -134,28 +134,39 @@ public class MainActivity extends Activity {
         super.onResume();
         mCamera = getfrontCameraInstance();
         Camera.Parameters mCameraparams = mCamera.getParameters();
+        
         Camera.Size pictureSize = getBiggestPictureSize(mCameraparams);
-        //mCameraparams.setPictureSize(pictureSize.width, pictureSize.height);
-        //mCamera.setParameters(mCameraparams);
-        //FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(pictureSize.width, pictureSize.height, 80);
-        //preview.setLayoutParams(params);
-        
+        Camera.Size previewSize = getBiggestPreviewSize(mCameraparams);
+                
         FrameLayout rl = (FrameLayout) findViewById(R.id.camera_preview);
-        
         Display display = getWindowManager().getDefaultDisplay();
         
-        int width =  display.getWidth();
-        int height = display.getHeight();
-       Log.i("test", "DISPLAY This is width " + width + " This is height " + height  );
-//        
-//        
-       
-        double piccoef = 1.0*pictureSize.width/pictureSize.height;
-        height = (int) (width*piccoef);
-        Log.i("test", "2 This is width " + width + " This is height " + height  );
+        int dwidth =  display.getWidth();
+        int dheight = display.getHeight();
+        int rheight;
+        Log.i("test", "This is DISPLAY width " + dwidth + " This is height " + dheight  );
+   
+        Log.i("test", "This is PREVIEW WIDTH  " + previewSize.width + " This is DISPLAY WIDTH  " + dwidth  );
         
-        rl.getLayoutParams().height = height;
-        rl.getLayoutParams().width = width;
+        
+        if (previewSize.height < dwidth || previewSize.width < dheight)
+        {
+        	 double piccoef = 1.0*pictureSize.width/pictureSize.height;
+             rheight = (int) (dwidth*piccoef);
+             Log.i("test", "2 This is width " + dwidth + " This is height " + rheight  );	
+        	
+        }
+        
+        else
+        {
+        	double piccoef = 1.0*previewSize.width/previewSize.height;
+            rheight = (int) (dwidth*piccoef);
+            Log.i("test", "2 This is width " + dwidth + " This is height " + rheight  );
+        	
+        }
+        
+        rl.getLayoutParams().height = rheight;
+        rl.getLayoutParams().width = dwidth;
         
         //rl.getLayoutParams().height = pictureSize.width;
         //rl.getLayoutParams().width = pictureSize.height;
@@ -290,7 +301,7 @@ private static Camera.Size getBiggestPictureSize(Camera.Parameters parameters) {
         
     	Camera.Size result=null;
 
-        for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
+        for (Camera.Size size : parameters.getSupportedPictureSizes()) {
         	
         	
         	if (result == null) {
@@ -310,9 +321,38 @@ private static Camera.Size getBiggestPictureSize(Camera.Parameters parameters) {
           }
         }
 
-        Log.i("test", "This is width " + result.width +"This is  height" + result.height );
+        Log.i("test", "This is BIGGEST width " + result.width +"This is  height" + result.height );
         return(result);
        
       }
+
+private static Camera.Size getBiggestPreviewSize(Camera.Parameters parameters) {
+    
+	Camera.Size result=null;
+
+    for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
+    	
+    	
+    	if (result == null) {
+        result=size;
+      }
+      else {
+        int resultArea=result.width * result.height;
+        int newArea=size.width * size.height;
+
+        //Log.i("test", "This is resultArea " + resultArea );
+        //Log.i("test", "This is newArea " + newArea );
+        
+        if (newArea >= resultArea) {
+          result=size;
+          Log.i("test", "This is width" + result.width);
+        }
+      }
+    }
+
+    Log.i("test", "This is BIGGEST width " + result.width +"This is  height" + result.height );
+    return(result);
+   
+  }
 
 }
