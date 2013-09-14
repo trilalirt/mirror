@@ -32,14 +32,14 @@ import android.widget.RelativeLayout;
 import android.widget.ZoomControls;
 
 public class MainActivity extends Activity {
-	
+
 	private boolean frontcamerapresent;
 	PowerManager pm;
 	PowerManager.WakeLock wl;
 	private Camera mCamera;
 	private int currentZoomLevel = 0, maxZoomLevel = 0;
 	private boolean stopped = false;
-	
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +48,7 @@ public class MainActivity extends Activity {
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         
 		setContentView(R.layout.activity_main);
-		
+
 		WindowManager.LayoutParams layout = getWindow().getAttributes();
 		layout.screenBrightness = 1F;
 		getWindow().setAttributes(layout);
@@ -64,11 +64,11 @@ public class MainActivity extends Activity {
 		        	finish();
 		        }
 		     })
-		    
+
 		     .show();
-			
+
 		}
-		
+
 		final Button StopButton = (Button) findViewById(R.id.button1);
 		StopButton.setBackgroundResource(R.drawable.pause2);
 		StopButton.setOnClickListener(new OnClickListener()
@@ -91,25 +91,25 @@ public class MainActivity extends Activity {
 			}
 		}
 				);
-		
+
 		AdView ad = (AdView) findViewById(R.id.adView);
         ad.loadAd(new AdRequest());
         
    
-		
+
 	}
-	
+
 	@Override
 	protected void onStart() {
 		super.onStart();
 		if (frontcamerapresent)
 		{
-			
+
 //			pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
 //			wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "My Tag");
 //			wl.acquire();
-		
-		
+
+
 		}
 		else
 		{
@@ -121,41 +121,52 @@ public class MainActivity extends Activity {
 		        	finish();
 		        }
 		     })
-		    
+
 		     .show();
-			
+
 		}
-		
+
 	}
-	
-	
+
+
 	@Override
     protected void onResume() {
         super.onResume();
         mCamera = getfrontCameraInstance();
         Camera.Parameters mCameraparams = mCamera.getParameters();
+        
         Camera.Size pictureSize = getBiggestPictureSize(mCameraparams);
-        //mCameraparams.setPictureSize(pictureSize.width, pictureSize.height);
-        //mCamera.setParameters(mCameraparams);
-        //FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(pictureSize.width, pictureSize.height, 80);
-        //preview.setLayoutParams(params);
-        
+        Camera.Size previewSize = getBiggestPreviewSize(mCameraparams);
+                
         FrameLayout rl = (FrameLayout) findViewById(R.id.camera_preview);
-        
         Display display = getWindowManager().getDefaultDisplay();
         
-        int width =  display.getWidth();
-        int height = display.getHeight();
-//        Log.i("test", "This is width " + width + " This is height " + height  );
-//        
-//        
-       
-        double piccoef = 1.0*pictureSize.width/pictureSize.height;
-        height = (int) (width*piccoef);
-        Log.i("test", "2 This is width " + width + " This is height " + height  );
+        int dwidth =  display.getWidth();
+        int dheight = display.getHeight();
+        int rheight;
+        Log.i("test", "This is DISPLAY width " + dwidth + " This is height " + dheight  );
+   
+        Log.i("test", "This is PREVIEW WIDTH  " + previewSize.width + " This is DISPLAY WIDTH  " + dwidth  );
         
-        rl.getLayoutParams().height = height;
-        rl.getLayoutParams().width = width;
+        
+        if (previewSize.height < dwidth || previewSize.width < dheight)
+        {
+        	 double piccoef = 1.0*pictureSize.width/pictureSize.height;
+             rheight = (int) (dwidth*piccoef);
+             Log.i("test", "2 This is width " + dwidth + " This is height " + rheight  );	
+        	
+        }
+        
+        else
+        {
+        	double piccoef = 1.0*previewSize.width/previewSize.height;
+            rheight = (int) (dwidth*piccoef);
+            Log.i("test", "2 This is width " + dwidth + " This is height " + rheight  );
+        	
+        }
+        
+        rl.getLayoutParams().height = rheight;
+        rl.getLayoutParams().width = dwidth;
         
         //rl.getLayoutParams().height = pictureSize.width;
         //rl.getLayoutParams().width = pictureSize.height;
@@ -207,7 +218,7 @@ public class MainActivity extends Activity {
 //        
 //         
 }
-	
+
 	@Override
     protected void onPause() {
         super.onPause();
@@ -247,13 +258,13 @@ public class MainActivity extends Activity {
 //		return true;
 //	}
 //	
-	
+
 	public static Camera getfrontCameraInstance(){
 	        Camera c = null;
 	        int cameraCount = 0;
 	        cameraCount = Camera.getNumberOfCameras();
 	        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
-	        
+
 	        for ( int camIdx = 0; camIdx < cameraCount; camIdx++ ) {
 	            Camera.getCameraInfo(camIdx, cameraInfo);
 	            if ( cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT  ) {
@@ -264,17 +275,17 @@ public class MainActivity extends Activity {
 	                }
 	            }
 	        }
-	        
+
 	        Camera.Parameters parameters = c.getParameters();
 	        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
 	        //parameters.setColorEffect(Camera.Parameters.EFFECT_NEGATIVE);
-	        
+
 	        c.setParameters(parameters);
-	        
+
 	        return c; // returns null if camera is unavailable
 	    }
 
-	
+
 	/** Check if this device has a camera */
 	private boolean checkCameraHardware(Context context) {
 	    if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)){
@@ -285,7 +296,7 @@ public class MainActivity extends Activity {
 	        return false;
 	    }
 	}
-	
+
 private static Camera.Size getBiggestPictureSize(Camera.Parameters parameters) {
         
     	Camera.Size result=null;
@@ -310,9 +321,38 @@ private static Camera.Size getBiggestPictureSize(Camera.Parameters parameters) {
           }
         }
 
-        Log.i("test", "This is width " + result.width +"This is  height" + result.height );
+        Log.i("test", "This is BIGGEST width " + result.width +"This is  height" + result.height );
         return(result);
        
       }
+
+private static Camera.Size getBiggestPreviewSize(Camera.Parameters parameters) {
+    
+	Camera.Size result=null;
+
+    for (Camera.Size size : parameters.getSupportedPreviewSizes()) {
+    	
+    	
+    	if (result == null) {
+        result=size;
+      }
+      else {
+        int resultArea=result.width * result.height;
+        int newArea=size.width * size.height;
+
+        //Log.i("test", "This is resultArea " + resultArea );
+        //Log.i("test", "This is newArea " + newArea );
+        
+        if (newArea >= resultArea) {
+          result=size;
+          Log.i("test", "This is width" + result.width);
+        }
+      }
+    }
+
+    Log.i("test", "This is BIGGEST width " + result.width +"This is  height" + result.height );
+    return(result);
+   
+  }
 
 }
