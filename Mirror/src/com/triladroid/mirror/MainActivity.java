@@ -53,9 +53,12 @@ public class MainActivity extends Activity {
 		layout.screenBrightness = 1F;
 		getWindow().setAttributes(layout);
         
+		
 		frontcamerapresent = checkCameraHardware(getApplicationContext());
 		if (!frontcamerapresent)
 		{
+			
+			finish();
 			new AlertDialog.Builder(this)
 		    .setTitle("No front camera")
 		    .setMessage("No front camera found on this device. Application will be closed :(")
@@ -290,10 +293,13 @@ public class MainActivity extends Activity {
 	private boolean checkCameraHardware(Context context) {
 	    if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT)){
 	        // this device has a camera
-	        return true;
+	    	Log.i("test", "FRONT TRUE");
+	    	return true;
+	        
 	    } else {
 	        // no camera on this device
-	        return false;
+	    	Log.i("test", "FRONT FALSE");
+	    	return false;
 	    }
 	}
 
