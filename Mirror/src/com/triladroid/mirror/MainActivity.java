@@ -6,6 +6,8 @@ import com.google.ads.AdRequest;
 import com.google.ads.AdView;
 
 
+
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.PowerManager;
@@ -26,10 +28,14 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.ZoomControls;
+
 
 public class MainActivity extends Activity {
 
@@ -39,6 +45,9 @@ public class MainActivity extends Activity {
 	private Camera mCamera;
 	private int currentZoomLevel = 0, maxZoomLevel = 0;
 	private boolean stopped = false;
+	private Spinner EffectSpinner;
+	private CharSequence selected = "nothing";
+	private static boolean isinproc = false;
 
 
 	@Override
@@ -72,8 +81,8 @@ public class MainActivity extends Activity {
 
 		}
 
-		final Button StopButton = (Button) findViewById(R.id.button1);
-		StopButton.setBackgroundResource(R.drawable.pause2);
+		final Button StopButton = (Button) findViewById(R.id.button2);
+		StopButton.setBackgroundResource(R.drawable.pause3);
 		StopButton.setOnClickListener(new OnClickListener()
 		{
 
@@ -88,12 +97,84 @@ public class MainActivity extends Activity {
 				else
 				{
 					stopped = false;
-					StopButton.setBackgroundResource(R.drawable.pause2);
+					StopButton.setBackgroundResource(R.drawable.pause3);
 					mCamera.startPreview();
 				}
 			}
 		}
 				);
+		
+		EffectSpinner = (Spinner)findViewById(R.id.effects);
+		ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(getApplicationContext(), R.array.Effects, android.R.layout.simple_spinner_item); 
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        EffectSpinner.setAdapter(adapter);
+        
+		EffectSpinner.setOnItemSelectedListener(
+				new AdapterView.OnItemSelectedListener() {
+				
+					public void onItemSelected(AdapterView<?> arg0, View v, int position, long id)
+			        {
+			           
+						
+						selected = (CharSequence) arg0.getItemAtPosition(position);
+						Log.i("test", "something selected" + selected);
+						//not sure
+						releaseCamera();
+						
+						mCamera = getfrontCameraInstance(getApplicationContext(), selected);
+				        Camera.Parameters mCameraparams = mCamera.getParameters();
+				        
+				        Camera.Size pictureSize = getBiggestPictureSize(mCameraparams);
+				        Camera.Size previewSize = getBiggestPreviewSize(mCameraparams);
+				                
+				        FrameLayout rl = (FrameLayout) findViewById(R.id.camera_preview);
+				        Display display = getWindowManager().getDefaultDisplay();
+				        
+				        int dwidth =  display.getWidth();
+				        int dheight = display.getHeight();
+				        int rheight;
+				        Log.i("test", "This is DISPLAY width " + dwidth + " This is height " + dheight  );
+				   
+				        Log.i("test", "This is PREVIEW WIDTH  " + previewSize.width + " This is DISPLAY WIDTH  " + dwidth  );
+				        
+				        
+				        if (previewSize.height < dwidth || previewSize.width < dheight)
+				        {
+				        	 double piccoef = 1.0*pictureSize.width/pictureSize.height;
+				             rheight = (int) (dwidth*piccoef);
+				             Log.i("test", "2 This is width " + dwidth + " This is height " + rheight  );	
+				        	
+				        }
+				        
+				        else
+				        {
+				        	double piccoef = 1.0*previewSize.width/previewSize.height;
+				            rheight = (int) (dwidth*piccoef);
+				            Log.i("test", "2 This is width " + dwidth + " This is height " + rheight  );
+				        	
+				        }
+				        
+				        rl.getLayoutParams().height = rheight;
+				        rl.getLayoutParams().width = dwidth;
+				        
+				        //rl.getLayoutParams().height = pictureSize.width;
+				        //rl.getLayoutParams().width = pictureSize.height;
+				        
+				        CameraPreview mPreview = new CameraPreview(getApplicationContext(), mCamera);
+				        //FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
+				        rl.removeAllViews();
+				        rl.addView(mPreview);
+						//not sure
+					
+			        }
+
+			        public void onNothingSelected(AdapterView<?> arg0)
+			        {
+			            Log.v("test", "nothing selected");
+			        }
+				
+				});
+        
 
 		AdView ad = (AdView) findViewById(R.id.adView);
         ad.loadAd(new AdRequest());
@@ -135,7 +216,7 @@ public class MainActivity extends Activity {
 	@Override
     protected void onResume() {
         super.onResume();
-        mCamera = getfrontCameraInstance();
+        mCamera = getfrontCameraInstance(getApplicationContext(), selected);
         Camera.Parameters mCameraparams = mCamera.getParameters();
         
         Camera.Size pictureSize = getBiggestPictureSize(mCameraparams);
@@ -179,7 +260,23 @@ public class MainActivity extends Activity {
         rl.removeAllViews();
         rl.addView(mPreview);
         
-        
+//        final Button PhotoButton = (Button) findViewById(R.id.button1);
+//        PhotoButton.setBackgroundResource(R.drawable.pause2);
+//        PhotoButton.setOnClickListener(new OnClickListener()
+//		{
+//
+//			@Override
+//			public void onClick(View v) {
+//				
+//				if (! isinproc) {
+//		 			isinproc = true;
+//		 			mCamera.takePicture(null, null, mPicture);
+//
+//		 		}	
+//				
+//			}
+//		}
+//				);
         
 //        ZoomControls zoomControls = (ZoomControls) findViewById(R.id.CAMERA_ZOOM_CONTROLS);
 //
@@ -262,32 +359,84 @@ public class MainActivity extends Activity {
 //	}
 //	
 
-	public static Camera getfrontCameraInstance(){
-	        Camera c = null;
-	        int cameraCount = 0;
-	        cameraCount = Camera.getNumberOfCameras();
-	        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+	public static Camera getfrontCameraInstance(Context context, CharSequence selected){
+        Camera c = null;
+        int cameraCount = 0;
+        cameraCount = Camera.getNumberOfCameras();
+        Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
 
-	        for ( int camIdx = 0; camIdx < cameraCount; camIdx++ ) {
-	            Camera.getCameraInfo(camIdx, cameraInfo);
-	            if ( cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT  ) {
-	                try {
-	                    c = Camera.open(camIdx);
-	                } catch (RuntimeException e) {
-	                    Log.e("1", "Camera failed to open: " + e.getLocalizedMessage());
-	                }
-	            }
-	        }
+        for ( int camIdx = 0; camIdx < cameraCount; camIdx++ ) {
+            Camera.getCameraInfo(camIdx, cameraInfo);
+            if ( cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT  ) {
+                try {
+                    c = Camera.open(camIdx);
+                } catch (RuntimeException e) {
+                    Log.e("1", "Camera failed to open: " + e.getLocalizedMessage());
+                }
+            }
+        }
 
-	        Camera.Parameters parameters = c.getParameters();
-	        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
-	        //parameters.setColorEffect(Camera.Parameters.EFFECT_NEGATIVE);
-
-	        c.setParameters(parameters);
-
-	        return c; // returns null if camera is unavailable
-	    }
-
+        Camera.Parameters parameters = c.getParameters();
+        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+        parameters.setRotation(270);
+        
+        //CharSequence negativeeffect = (CharSequence) "Negative effect";
+        //Log.i("test", "this is sequence" + negativeeffect);
+        Log.i("test", "this is selected" + selected);
+        if (selected.toString().contentEquals("Negative effect"))
+        {
+        Log.i("test", "Negative effect");
+        parameters.setColorEffect(Camera.Parameters.EFFECT_NEGATIVE);
+        }
+        if (selected.toString().contentEquals("Sepia effect"))
+        {
+        Log.i("test", "Sepia effect");
+        parameters.setColorEffect(Camera.Parameters.EFFECT_SEPIA);
+        }
+        if (selected.toString().contentEquals("Aqua effect"))
+        {
+        Log.i("test", "Aqua effect");
+        parameters.setColorEffect(Camera.Parameters.EFFECT_AQUA);
+        }
+        if (selected.toString().contentEquals("Mono effect"))
+        {
+        Log.i("test", "Mono effect");
+        parameters.setColorEffect(Camera.Parameters.EFFECT_MONO);
+        }
+        if (selected.toString().contentEquals("Posterize effect"))
+        {
+        Log.i("test", "Posterize effect");
+        parameters.setColorEffect(Camera.Parameters.EFFECT_POSTERIZE);
+        }
+        if (selected.toString().contentEquals("Solarize effect"))
+        {
+        Log.i("test", "Solarize effect");
+        parameters.setColorEffect(Camera.Parameters.EFFECT_SOLARIZE);
+        }
+        // doesn;t work, don't know why
+        if (selected.toString().contentEquals("Whiteboard effect"))
+        {
+        Log.i("test", "Whiteboard effect");
+        parameters.setColorEffect(Camera.Parameters.EFFECT_WHITEBOARD);
+        }
+        if (selected.toString().contentEquals("Blackboard effect"))
+        {
+        Log.i("test", "Blackboard effect");
+        parameters.setColorEffect(Camera.Parameters.EFFECT_BLACKBOARD);
+        }
+        
+        
+        
+        else
+        {
+        Log.i("test", "IF DIDNT WORK");
+        }
+        //List<String> EffectsList = parameters.getSupportedColorEffects();
+        
+        
+        c.setParameters(parameters);
+        return c; // returns null if camera is unavailable
+    }
 
 	/** Check if this device has a camera */
 	private boolean checkCameraHardware(Context context) {
